@@ -18,7 +18,7 @@ defaultGame :: Game
 defaultGame = Game
     (Paddle (0, -windowHeight / 2 + 5 + paddleHeightCFG ) paddleWidthCFG paddleHeightCFG)
     (Ball (0, 0) (0, 0) ballRadiusCFG)
-    []
+    [Block (3, 14) 20 10 1, Block (24, 3) 20 10 1, Block (53, 53) 20 10 1, Block (73, 73) 20 10 1]
     Running
 
 placeholderInput :: Event -> Game -> Game

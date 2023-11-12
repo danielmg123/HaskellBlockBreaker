@@ -11,12 +11,28 @@ module Render where
 import Graphics.Gloss
 import GameTypes
 
+-- Draws a box
+box :: Float -> Float -> Float -> Float -> Picture
+box x y w h = Polygon [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+
 drawPaddle :: Paddle -> Picture
--- drawPaddle _ = Color red (Polygon [(3, 3), (30, 3), (30, 20), (3, 20)])
-drawPaddle (Paddle (x, y) w h) = Color red (Polygon [(x, y), (x + w, y), (x + w, y + h), (x, y + h)])
+drawPaddle (Paddle (x, y) width height) =
+    Color red (box x y width height)
 
 drawBall :: Ball -> Picture
 drawBall (Ball (x, y) _ r) = Translate x y (Color blue (circleSolid r))
 
+drawBlock :: Block -> Picture
+drawBlock (Block (x, y) width height strength) =
+    Color (bright green) (box x y width height)
+
+drawBlocks :: [Block] -> [Picture] -> Picture
+drawBlocks [] ps = Pictures ps
+drawBlocks (b:bs) ps = drawBlocks bs (drawBlock b : ps)
+
 drawGame :: Game -> Picture
-drawGame (Game paddle ball blocks state) = Pictures [ drawPaddle paddle, drawBall ball]
+drawGame (Game paddle ball blocks state) =
+    Pictures [
+        drawPaddle paddle,
+        drawBall ball,
+        drawBlocks blocks []]
