@@ -64,7 +64,8 @@ executable BrickBreaker
     -- Modules included in this executable, other than Main.
     other-modules:    Render,
                       GameTypes,
-                      Constants
+                      Constants,
+                      GameLogic
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

@@ -11,20 +11,20 @@ module Render where
 import Graphics.Gloss
 import GameTypes
 
--- Draws a box
+-- Draws a box (x y width height)
 box :: Float -> Float -> Float -> Float -> Picture
 box x y w h = Polygon [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
 
 drawPaddle :: Paddle -> Picture
 drawPaddle (Paddle (x, y) width height) =
-    Color red (box x y width height)
+    Color red $ box x y width height
 
 drawBall :: Ball -> Picture
-drawBall (Ball (x, y) _ r) = Translate x y (Color blue (circleSolid r))
+drawBall (Ball (x, y) _ r) = Translate x y $ Color blue $ circleSolid r
 
 drawBlock :: Block -> Picture
 drawBlock (Block (x, y) width height strength) =
-    Color (bright green) (box x y width height)
+    Color (bright green) $ box x y width height
 
 drawBlocks :: [Block] -> [Picture] -> Picture
 drawBlocks [] ps = Pictures ps
