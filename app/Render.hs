@@ -31,7 +31,7 @@ drawBlocks [] ps = Pictures ps
 drawBlocks (b:bs) ps = drawBlocks bs (drawBlock b : ps)
 
 drawGame :: Game -> Picture
-drawGame (Game paddle ball blocks state) =
+drawGame (Game input paddle ball blocks state) =
     Pictures [
         drawPaddle paddle,
         drawBall ball,
