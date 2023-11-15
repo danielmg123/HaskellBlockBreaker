@@ -16,7 +16,8 @@ type Velocity = (Float, Float)
 
 -- The Game type contains all the information about the current state of the game.
 data Game = Game
-  { gamePaddle :: Paddle   -- The player's paddle
+  { gameInputState :: GameInputState  -- The input state
+  , gamePaddle :: Paddle    -- The player's paddle
   , gameBall :: Ball       -- The ball in play
   , gameBlocks :: [Block]  -- The blocks remaining to be broken
   , gameState :: GameState -- The current state of the game
@@ -31,6 +32,13 @@ data Paddle = Paddle
   , paddleWidth :: Float     -- The width of the paddle
   , paddleHeight :: Float    -- The height of the paddle
   }
+
+data GameInputState = GameInputState
+  { paddleMovement :: PaddleInputState, -- How the paddle is moving
+    paddleOtherAmbiguousThing :: Bool
+  }
+
+data PaddleInputState = MoveLeft | MoveRight | HoldStill deriving (Eq, Show)
 
 -- The Ball type represents the ball.
 data Ball = Ball

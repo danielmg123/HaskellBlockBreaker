@@ -9,14 +9,16 @@ Implementation:
 
 module Main where
 import Graphics.Gloss
-import Graphics.Gloss.Interface.IO.Game (Event)
+import Graphics.Gloss.Interface.IO.Game
 import Constants
 import GameTypes
+import InputHandler
 import GameLogic
 import Render (drawGame)
 
 defaultGame :: Game
 defaultGame = Game
+    (GameInputState HoldStill False)
     -- In Gloss (0, 0) is the center of the screen
     (Paddle {
         paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
@@ -29,10 +31,7 @@ defaultGame = Game
     [Block (3, 14) 20 10 1, Block (24, 3) 20 10 1, Block (53, 53) 20 10 1, Block (73, 73) 20 10 1]
     Running
 
-placeholderInput :: Event -> Game -> Game
-placeholderInput _ game = game
-
 main :: IO ()
 main = play
     (InWindow "HaskellBlockBreaker" (floor windowWidth, floor windowHeight) (30, 30))
-    black fps defaultGame drawGame placeholderInput updateGame
+    black fps defaultGame drawGame handleEvent updateGame
