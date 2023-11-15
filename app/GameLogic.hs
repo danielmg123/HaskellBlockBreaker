@@ -14,9 +14,12 @@ import GameTypes
 updateGame :: Float -> Game -> Game
 updateGame delta game = game
     {
-        gameBall = updateBall delta (gameBall game),
-        gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) (gamePaddle game)
+        gameBall = updateBall delta (bounceOffPaddle delta ball paddle),
+        gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) paddle
     }
+    where
+        ball = gameBall game
+        paddle = gamePaddle game
 
 -- Negates velocity if ball is hitting a boundary
 -- It needs to be changed. It only bounces in a square around the center
@@ -25,6 +28,20 @@ bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) radius)
     | x >= border || x <= -border = ball {ballVelocity = (-vx, vy)}
     | y >= border || y <= -border = ball {ballVelocity = (vx, -vy)}
     | otherwise = ball
+
+bounceOffPaddle :: Float -> Ball -> Paddle -> Ball
+bounceOffPaddle delta ball paddle
+    | bx > px && bx < px + pw && by > py && by < py + ph =
+        ball {ballVelocity = (fst bv, -(snd bv))}
+    | otherwise = ball
+        where
+            bx = fst $ ballPosition ball
+            by = snd $ ballPosition ball
+            bv = ballVelocity ball
+            px = fst $ paddlePosition paddle
+            py = snd $ paddlePosition paddle
+            pw = paddleWidth paddle
+            ph = paddleHeight paddle
 
 -- Updates the ball
 updateBall :: Float -> Ball -> Ball
