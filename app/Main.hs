@@ -16,20 +16,24 @@ import InputHandler
 import GameLogic
 import Render (drawGame)
 
+
 defaultGame :: Game
 defaultGame = Game
-    (GameInputState HoldStill False)
+    { gameInputState = GameInputState HoldStill False
     -- In Gloss (0, 0) is the center of the screen
-    (Paddle {
-        paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
-        , paddleWidth = paddleWidthCFG
-        , paddleHeight = paddleHeightCFG})
-    (Ball {
-        ballPosition = (7, 41)
-        , ballVelocity = (63, 81)
-        , ballRadius = ballRadiusCFG})
-    [Block (3, 14) 20 10 1, Block (24, 3) 20 10 1, Block (53, 53) 20 10 1, Block (73, 73) 20 10 1]
-    Running
+    , gamePaddle = Paddle { paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
+                          , paddleWidth = paddleWidthCFG
+                          , paddleHeight = paddleHeightCFG}
+    , gameBall = Ball { ballPosition = (7, 41)
+                      , ballVelocity = (80, 120)
+                      , ballRadius = ballRadiusCFG}
+    , gameBlocks = [ Block (3, 14) 20 10 3 Red
+                   , Block (24, 3) 20 10 2 Yellow
+                   , Block (53, 53) 20 10 1 Green
+                   , Block (73, 73) 20 10 (-1) Grey  -- Grey block with negative strength, indicating unbreakable
+                   ]
+    , gameState = Running
+    }
 
 main :: IO ()
 main = play

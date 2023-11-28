@@ -47,10 +47,13 @@ data Ball = Ball
   , ballRadius :: Float       -- The radius of the ball
   }
 
+data BlockColor = Grey | Green | Yellow | Red deriving (Eq)
+
 -- The Block type represents a single block that the ball can break.
 data Block = Block
   { blockPosition :: Point  -- The position of the block
   , blockWidth :: Float     -- The width of the block
   , blockHeight :: Float    -- The height of the block
   , blockStrength :: Int    -- The strength of the block (hits required to break it)
+  , blockColor :: BlockColor -- The color of the block
   }

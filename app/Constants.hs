@@ -20,7 +20,7 @@ paddleWidthCFG :: Float
 paddleWidthCFG = 80
 
 paddleHeightCFG :: Float
-paddleHeightCFG = 20
+paddleHeightCFG = 10
 
 ballRadiusCFG :: Float
-ballRadiusCFG = 12
+ballRadiusCFG = 6
