@@ -30,17 +30,17 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
     updatedBallAfterPaddle = updateBall delta (bounceOffPaddle delta (gameBall game) (gamePaddle game))
     processBlock block (blocks, ball) =
         if colType /= CollideNone
-        then case blockColor block of
-            Grey   -> (block : blocks, reflectedBall)
-            _      -> if blockStrength block > 1
-                    then (block { blockStrength = blockStrength block - 1
-                                , blockColor = updateBlockColor (blockColor block) } : blocks,
-                            reflectedBall)
-                    else (blocks, reflectedBall)
+        then (hitBlock block ++ blocks, reflectedBall)
         else (block : blocks, ball)
             where
                 colType = detectCollision ball block
                 reflectedBall = reflectBall ball colType
+
+    hitBlock :: Block -> [Block]
+    hitBlock (Block _ _ _ 1 _) = []
+    hitBlock block@(Block _ _ _ _ Grey) = [block]
+    hitBlock block = [block { blockStrength = blockStrength block - 1
+                           , blockColor = updateBlockColor (blockColor block)}]
 
     reflectBall :: Ball -> CollisionType -> Ball
     reflectBall ball CollideHorizontal = ball { ballVelocity = (-(fst (ballVelocity ball)), snd (ballVelocity ball)) }
