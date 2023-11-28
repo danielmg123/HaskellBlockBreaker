@@ -69,8 +69,8 @@ bounceOffPaddle delta ball paddle
         ball {ballVelocity = (fst bv, -(snd bv))}
     | otherwise = ball
         where
-            bx = fst $ ballPosition ball
-            by = snd $ ballPosition ball
+            bx = (fst $ ballPosition ball) - (ballRadius ball)
+            by = (snd $ ballPosition ball) - (ballRadius ball)
             bv = ballVelocity ball
             px = fst $ paddlePosition paddle
             py = snd $ paddlePosition paddle
