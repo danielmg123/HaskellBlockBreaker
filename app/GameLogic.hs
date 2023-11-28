@@ -29,18 +29,24 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
   where
     updatedBallAfterPaddle = updateBall delta (bounceOffPaddle delta (gameBall game) (gamePaddle game))
     processBlock block (blocks, ball) =
-        if detectCollision ball block
+        if colType /= CollideNone
         then case blockColor block of
-            Grey   -> (block : blocks, reflectBall ball)
+            Grey   -> (block : blocks, reflectedBall)
             _      -> if blockStrength block > 1
                     then (block { blockStrength = blockStrength block - 1
                                 , blockColor = updateBlockColor (blockColor block) } : blocks,
-                            reflectBall ball)
-                    else (blocks, reflectBall ball)
+                            reflectedBall)
+                    else (blocks, reflectedBall)
         else (block : blocks, ball)
+            where
+                colType = detectCollision ball block
+                reflectedBall = reflectBall ball colType
 
-    reflectBall :: Ball -> Ball
-    reflectBall ball = ball { ballVelocity = (fst (ballVelocity ball), -(snd (ballVelocity ball))) }
+    reflectBall :: Ball -> CollisionType -> Ball
+    reflectBall ball CollideHorizontal = ball { ballVelocity = (-(fst (ballVelocity ball)), snd (ballVelocity ball)) }
+    reflectBall ball CollideVertical = ball { ballVelocity = (fst (ballVelocity ball), -(snd (ballVelocity ball))) }
+    -- Corner collisions...?
+    reflectBall ball _ = ball
 
     updateBlockColor :: BlockColor -> BlockColor
     updateBlockColor Red = Yellow
@@ -49,11 +55,22 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
     updateBlockColor Grey = Grey  -- Grey blocks don't change color
 
 
+data CollisionType = CollideVertical | CollideHorizontal | CollideCorner | CollideNone
+    deriving (Eq)
+
 -- Check collision between ball and block
-detectCollision :: Ball -> Block -> Bool
-detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _) =
-    bx + radius > x && bx - radius < x + width &&
-    by + radius > y && by - radius < y + height
+detectCollision :: Ball -> Block -> CollisionType
+detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
+    | bx + radius < x || bx - radius > x2 ||
+      by + radius < y || by - radius > y2   = CollideNone
+    | (bx > x && bx < x2) &&
+      (by + radius > y || by - radius < y2) = CollideVertical
+    | (by > y && by < y2) &&
+      (bx + radius > x || bx - radius < x2) = CollideHorizontal
+    | otherwise                             = CollideNone
+        where
+            x2 = x + width
+            y2 = y + height
 
 -- Negates velocity if ball is hitting a boundary
 -- It needs to be changed. It only bounces in a square around the center
