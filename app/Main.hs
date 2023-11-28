@@ -24,14 +24,13 @@ defaultGame = Game
     , gamePaddle = Paddle { paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
                           , paddleWidth = paddleWidthCFG
                           , paddleHeight = paddleHeightCFG}
-    , gameBall = Ball { ballPosition = (7, 41)
-                      , ballVelocity = (80, 120)
+    , gameBall = Ball { ballPosition = (0, 200)
+                      , ballVelocity = (30, 240)
                       , ballRadius = ballRadiusCFG}
-    , gameBlocks = [ Block (3, 14) 20 10 3 Red
-                   , Block (24, 3) 20 10 2 Yellow
-                   , Block (53, 53) 20 10 1 Green
-                   , Block (73, 73) 20 10 (-1) Grey  -- Grey block with negative strength, indicating unbreakable
-                   ]
+    , gameBlocks =  [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
+                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
+                    [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
+                    [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
     , gameState = Running
     }
 

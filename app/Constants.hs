@@ -24,3 +24,9 @@ paddleHeightCFG = 10
 
 ballRadiusCFG :: Float
 ballRadiusCFG = 6
+
+blockWidthCFG :: Float
+blockWidthCFG = 24
+
+blockHeightCFG :: Float
+blockHeightCFG = 18
