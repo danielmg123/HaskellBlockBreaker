@@ -58,3 +58,7 @@ data Block = Block
   , blockStrength :: Int    -- The strength of the block (hits required to break it)
   , blockColor :: BlockColor -- The color of the block
   }
+
+-- The CollisionType represents how a collision between the ball and a block occured
+data CollisionType = CollideVertical | CollideHorizontal | CollideNE | CollideNW | CollideSE | CollideSW | CollideNone
+    deriving (Eq)

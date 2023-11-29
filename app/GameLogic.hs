@@ -10,6 +10,8 @@ Implementation:
 module GameLogic where
 import GameTypes
 import Constants
+import Util
+import GameTypes (CollisionType(CollideNE))
 
 -- Updates the game state
 updateGame :: Float -> Game -> Game
@@ -94,10 +96,6 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
     updateBlockColor Green = Green
     updateBlockColor Grey = Grey  -- Grey blocks don't change color
 
-
-data CollisionType = CollideVertical | CollideHorizontal | CollideCorner | CollideNone
-    deriving (Eq)
-
 -- Check collision between ball and block
 detectCollision :: Ball -> Block -> CollisionType
 detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
@@ -107,6 +105,10 @@ detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
       (by + radius > y || by - radius < y2) = CollideVertical
     | (by > y && by < y2) &&
       (bx + radius > x || bx - radius < x2) = CollideHorizontal
+    | distance (bx, by) (x , y ) < radius   = CollideNE
+    | distance (bx, by) (x2, y ) < radius   = CollideNW
+    | distance (bx, by) (x , y2) < radius   = CollideSE
+    | distance (bx, by) (x2, y2) < radius   = CollideSW
     | otherwise                             = CollideNone
         where
             x2 = x + width
