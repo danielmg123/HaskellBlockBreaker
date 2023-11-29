@@ -87,7 +87,7 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
     reflectBall :: Ball -> Block -> CollisionType -> Ball
     reflectBall ball@(Ball _ (vx, vy) _) _ CollideHorizontal = ball { ballVelocity = (-vx, vy) }
     reflectBall ball@(Ball _ (vx, vy) _) _ CollideVertical = ball { ballVelocity = (vx, -vy) }
-    reflectBall ball@(Ball (bx, by) v@(vx, vy) r) block colType = ball {ballVelocity = newVelocity}
+    reflectBall ball@(Ball (bx, by) v@(vx, vy) _) block colType = ball {ballVelocity = newVelocity}
         where
             (cx, cy) = cornerPoint block colType
             angleCorner = vectorAngle (bx - cx, by - cy)
@@ -162,6 +162,7 @@ bounceOffPaddle delta ball paddle
 updateBall :: Float -> Ball -> Ball
 updateBall delta ball =
     updateBallPosition delta $
+    updateBallVelocity delta $
     bounceOffBoundaries 240 ball
 
 -- Adds the velocity to the position of the ball
@@ -171,6 +172,10 @@ updateBallPosition delta ball = ball
     where
         pos = ballPosition ball
         vel = ballVelocity ball
+
+-- Increases velocity by ballSpeedUp * delta
+updateBallVelocity :: Float -> Ball -> Ball
+updateBallVelocity delta ball@(Ball _ v _) = ball {ballVelocity = mulSV (magV v + (ballSpeedUp * delta)) (normalizeV v)}
 
 updatePaddle :: Float -> PaddleInputState -> Paddle -> Paddle
 updatePaddle delta movement paddle = 

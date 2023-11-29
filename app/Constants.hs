@@ -30,3 +30,7 @@ blockWidthCFG = 24
 
 blockHeightCFG :: Float
 blockHeightCFG = 18
+
+-- How fast the ball speeds up in pixels per second per second
+ballSpeedUp :: Float
+ballSpeedUp = 1.8
