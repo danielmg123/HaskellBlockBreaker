@@ -11,7 +11,7 @@ module GameLogic where
 import GameTypes
 import Constants
 import Util
-import GameTypes (CollisionType(CollideNE))
+import Graphics.Gloss.Data.Vector
 
 -- Updates the game state
 updateGame :: Float -> Game -> Game
@@ -76,7 +76,7 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
         else (block : blocks, ball)
             where
                 colType = detectCollision ball block
-                reflectedBall = reflectBall ball colType
+                reflectedBall = reflectBall ball block colType
 
     hitBlock :: Block -> [Block]
     hitBlock (Block _ _ _ 1 _) = []
@@ -84,11 +84,24 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
     hitBlock block = [block { blockStrength = blockStrength block - 1
                            , blockColor = updateBlockColor (blockColor block)}]
 
-    reflectBall :: Ball -> CollisionType -> Ball
-    reflectBall ball CollideHorizontal = ball { ballVelocity = (-(fst (ballVelocity ball)), snd (ballVelocity ball)) }
-    reflectBall ball CollideVertical = ball { ballVelocity = (fst (ballVelocity ball), -(snd (ballVelocity ball))) }
-    -- Corner collisions...?
-    reflectBall ball _ = ball
+    reflectBall :: Ball -> Block -> CollisionType -> Ball
+    reflectBall ball@(Ball _ (vx, vy) _) _ CollideHorizontal = ball { ballVelocity = (-vx, vy) }
+    reflectBall ball@(Ball _ (vx, vy) _) _ CollideVertical = ball { ballVelocity = (vx, -vy) }
+    reflectBall ball@(Ball (bx, by) v@(vx, vy) r) block colType = ball {ballVelocity = newVelocity}
+        where
+            (cx, cy) = cornerPoint block colType
+            angleCorner = vectorAngle (bx - cx, by - cy)
+            angleVelocity = vectorAngle (-vx, -vy)
+            angleReflected = angleVelocity + (2 * (angleCorner - angleVelocity))
+            newVelocity = mulSV (magV v) (cos angleReflected, sin angleReflected)
+    reflectBall ball _ _ = ball
+
+    -- Gets the corner point based on collision type
+    cornerPoint :: Block -> CollisionType -> Point
+    cornerPoint (Block (x, y) w h _ _) CollideNW = (x, y + h)
+    cornerPoint (Block (x, y) w h _ _) CollideNE = (x + w, y + h)
+    cornerPoint (Block (x, y) w h _ _) CollideSE = (x + w, y)
+    cornerPoint (Block (x, y) w h _ _) _ = (x, y)
 
     updateBlockColor :: BlockColor -> BlockColor
     updateBlockColor Red = Yellow
@@ -105,10 +118,10 @@ detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
       (by + radius > y || by - radius < y2) = CollideVertical
     | (by > y && by < y2) &&
       (bx + radius > x || bx - radius < x2) = CollideHorizontal
-    | distance (bx, by) (x , y ) < radius   = CollideNE
-    | distance (bx, by) (x2, y ) < radius   = CollideNW
-    | distance (bx, by) (x , y2) < radius   = CollideSE
-    | distance (bx, by) (x2, y2) < radius   = CollideSW
+    | distance (bx, by) (x , y ) < radius   = CollideSW
+    | distance (bx, by) (x2, y ) < radius   = CollideSE
+    | distance (bx, by) (x , y2) < radius   = CollideNW
+    | distance (bx, by) (x2, y2) < radius   = CollideNE
     | otherwise                             = CollideNone
         where
             x2 = x + width
