@@ -82,8 +82,10 @@ bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) radius)
 
 bounceOffPaddle :: Float -> Ball -> Paddle -> Ball
 bounceOffPaddle delta ball paddle
-    | bx > px && bx < px + pw && by > py && by < py + ph =
-        ball {ballVelocity = (fst bv, -(snd bv))}
+    | bx > px - pmx && bx < px - pmx + pw && by > py && by < py + ph = 
+        ball {ballVelocity = ((-50), -(snd bv))}
+    | bx > px + pmx && bx < px + pmx + pw && by > py && by < py  + ph =
+        ball {ballVelocity = ((50), -(snd bv))}
     | otherwise = ball
         where
             bx = (fst $ ballPosition ball) - (ballRadius ball)
@@ -93,6 +95,7 @@ bounceOffPaddle delta ball paddle
             py = snd $ paddlePosition paddle
             pw = paddleWidth paddle
             ph = paddleHeight paddle
+            pmx = pw/2
 
 -- Updates the ball
 updateBall :: Float -> Ball -> Ball
