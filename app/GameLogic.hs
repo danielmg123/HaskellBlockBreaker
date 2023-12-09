@@ -13,15 +13,28 @@ import Constants
 
 -- Updates the game state
 updateGame :: Float -> Game -> Game
-updateGame delta game = game
-    { gameBall = updatedBall
-    , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) paddle
-    , gameBlocks = updatedBlocks
-    }
+updateGame delta game
+    | ballY - ballRadius <= -windowHeight / 2 = resetGame
+    | otherwise = game
+        { gameBall = updatedBall
+        , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) paddle
+        , gameBlocks = updatedBlocks
+        }
   where
     ball = gameBall game
     paddle = gamePaddle game
+    ballY = snd $ ballPosition ball
+    ballRadius = ballRadiusCFG
     (updatedBlocks, updatedBall) = updateBlocksAndBall delta game
+
+    resetGame = game
+        { gameBall = Ball { ballPosition = (0, 10 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+                          , ballVelocity = (0, 0)
+                          , ballRadius = ballRadiusCFG }
+        , gamePaddle = Paddle { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
+                              , paddleWidth = paddleWidthCFG
+                              , paddleHeight = paddleHeightCFG }
+        }
 
 -- Function to update blocks and ball
 updateBlocksAndBall :: Float -> Game -> ([Block], Ball)
@@ -133,5 +146,3 @@ updatePaddle delta movement paddle =
         x = fst $ paddlePosition paddle
         y = snd $ paddlePosition paddle
         halfWidth = (windowWidth / 2)  -- As defined in drawBorders
-
-

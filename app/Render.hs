@@ -50,7 +50,7 @@ drawGame (Game _ paddle ball blocks _) =
 drawBorders :: Picture
 drawBorders = Color (greyN 0.5) $ Pictures
     [ line [(-halfWidth, halfHeight), (halfWidth, halfHeight)]   -- Top border
-    , line [(-halfWidth, -halfHeight), (halfWidth, -halfHeight)] -- Bottom border
+    -- , line [(-halfWidth, -halfHeight), (halfWidth, -halfHeight)] -- Bottom border
     , line [(-halfWidth, halfHeight), (-halfWidth, -halfHeight)] -- Left border
     , line [(halfWidth, halfHeight), (halfWidth, -halfHeight)]   -- Right border
     ]

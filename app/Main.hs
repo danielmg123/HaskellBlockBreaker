@@ -21,11 +21,11 @@ defaultGame :: Game
 defaultGame = Game
     { gameInputState = GameInputState HoldStill False
     -- In Gloss (0, 0) is the center of the screen
-    , gamePaddle = Paddle { paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
+    , gamePaddle = Paddle { paddlePosition = (-40, -windowHeight / 2 + 5 + paddleHeightCFG)
                           , paddleWidth = paddleWidthCFG
                           , paddleHeight = paddleHeightCFG}
-    , gameBall = Ball { ballPosition = (0, 200)
-                      , ballVelocity = (30, 240)
+    , gameBall = Ball { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+                      , ballVelocity = (0, 0)
                       , ballRadius = ballRadiusCFG}
     , gameBlocks =  [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
                     [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
