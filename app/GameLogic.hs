@@ -14,27 +14,54 @@ import Constants
 -- Updates the game state
 updateGame :: Float -> Game -> Game
 updateGame delta game
-    | ballY - ballRadius <= -windowHeight / 2 = resetGame
+    | ballHitsBottom = handleBallReset
     | otherwise = game
         { gameBall = updatedBall
-        , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) paddle
+        , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) (gamePaddle game)
         , gameBlocks = updatedBlocks
         }
   where
     ball = gameBall game
-    paddle = gamePaddle game
     ballY = snd $ ballPosition ball
     ballRadius = ballRadiusCFG
+    ballHitsBottom = ballY - ballRadius <= -windowHeight / 2
+
     (updatedBlocks, updatedBall) = updateBlocksAndBall delta game
 
-    resetGame = game
-        { gameBall = Ball { ballPosition = (0, 10 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
-                          , ballVelocity = (0, 0)
-                          , ballRadius = ballRadiusCFG }
-        , gamePaddle = Paddle { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
-                              , paddleWidth = paddleWidthCFG
-                              , paddleHeight = paddleHeightCFG }
+    handleBallReset
+        | gameLives game > 1 = game
+            { gameBall = resetBall
+            , gamePaddle = resetPaddle
+            , gameLives = gameLives game - 1
+            }
+        | otherwise = resetGame
+
+    resetBall = Ball 
+        { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+        , ballVelocity = (0, 0)
+        , ballRadius = ballRadiusCFG
         }
+
+    resetPaddle = Paddle 
+        { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
+        , paddleWidth = paddleWidthCFG
+        , paddleHeight = paddleHeightCFG 
+        }
+
+    resetGame = game
+        { gameBall = resetBall
+        , gameBlocks = initialBlocks
+        , gameLives = initialLives
+        , gamePaddle = resetPaddle
+        }
+
+    initialBlocks = [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
+                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
+                    [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
+                    [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
+
+    initialLives = 3  -- Set the initial number of lives here
+
 
 -- Function to update blocks and ball
 updateBlocksAndBall :: Float -> Game -> ([Block], Ball)
