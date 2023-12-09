@@ -13,15 +13,55 @@ import Constants
 
 -- Updates the game state
 updateGame :: Float -> Game -> Game
-updateGame delta game = game
-    { gameBall = updatedBall
-    , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) paddle
-    , gameBlocks = updatedBlocks
-    }
+updateGame delta game
+    | ballHitsBottom = handleBallReset
+    | otherwise = game
+        { gameBall = updatedBall
+        , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) (gamePaddle game)
+        , gameBlocks = updatedBlocks
+        }
   where
     ball = gameBall game
-    paddle = gamePaddle game
+    ballY = snd $ ballPosition ball
+    ballRadius = ballRadiusCFG
+    ballHitsBottom = ballY - ballRadius <= -windowHeight / 2
+
     (updatedBlocks, updatedBall) = updateBlocksAndBall delta game
+
+    handleBallReset
+        | gameLives game > 1 = game
+            { gameBall = resetBall
+            , gamePaddle = resetPaddle
+            , gameLives = gameLives game - 1
+            }
+        | otherwise = resetGame
+
+    resetBall = Ball 
+        { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+        , ballVelocity = (0, 0)
+        , ballRadius = ballRadiusCFG
+        }
+
+    resetPaddle = Paddle 
+        { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
+        , paddleWidth = paddleWidthCFG
+        , paddleHeight = paddleHeightCFG 
+        }
+
+    resetGame = game
+        { gameBall = resetBall
+        , gameBlocks = initialBlocks
+        , gameLives = initialLives
+        , gamePaddle = resetPaddle
+        }
+
+    initialBlocks = [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
+                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
+                    [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
+                    [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
+
+    initialLives = 3  -- Set the initial number of lives here
+
 
 -- Function to update blocks and ball
 updateBlocksAndBall :: Float -> Game -> ([Block], Ball)
@@ -83,16 +123,25 @@ bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) radius)
 bounceOffPaddle :: Float -> Ball -> Paddle -> Ball
 bounceOffPaddle delta ball paddle
     | bx > px && bx < px + pw && by > py && by < py + ph =
-        ball {ballVelocity = (fst bv, -(snd bv))}
+        ball { ballVelocity = (newVx, -(snd bv)) }
     | otherwise = ball
         where
-            bx = (fst $ ballPosition ball) - (ballRadius ball)
+            bx = fst $ ballPosition ball
             by = (snd $ ballPosition ball) - (ballRadius ball)
             bv = ballVelocity ball
             px = fst $ paddlePosition paddle
             py = snd $ paddlePosition paddle
             pw = paddleWidth paddle
             ph = paddleHeight paddle
+
+            -- bounce angle
+            paddleMid = px + pw / 2
+            distanceFromMid = bx - paddleMid
+            maxBounceAngle = pi / 4  -- Increase num to increase angle
+            ratio = distanceFromMid / (pw / 2)
+            newVx = ratio * (ballSpeed * cos maxBounceAngle)
+            ballSpeed = sqrt $ fst bv ** 2 + snd bv ** 2
+
 
 -- Updates the ball
 updateBall :: Float -> Ball -> Ball
@@ -124,5 +173,3 @@ updatePaddle delta movement paddle =
         x = fst $ paddlePosition paddle
         y = snd $ paddlePosition paddle
         halfWidth = (windowWidth / 2)  -- As defined in drawBorders
-
-

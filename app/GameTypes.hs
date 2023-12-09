@@ -21,6 +21,7 @@ data Game = Game
   , gameBall :: Ball       -- The ball in play
   , gameBlocks :: [Block]  -- The blocks remaining to be broken
   , gameState :: GameState -- The current state of the game
+  , gameLives :: Int    -- The number of lives remaining
   }
 
 -- The GameState type represents the different possible states of the game.

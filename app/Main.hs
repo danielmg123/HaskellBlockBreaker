@@ -21,20 +21,24 @@ defaultGame :: Game
 defaultGame = Game
     { gameInputState = GameInputState HoldStill False
     -- In Gloss (0, 0) is the center of the screen
-    , gamePaddle = Paddle { paddlePosition = (0, -windowHeight / 2 + 5 + paddleHeightCFG)
+    , gamePaddle = Paddle { paddlePosition = (-40, -windowHeight / 2 + 5 + paddleHeightCFG)
                           , paddleWidth = paddleWidthCFG
                           , paddleHeight = paddleHeightCFG}
-    , gameBall = Ball { ballPosition = (0, 200)
-                      , ballVelocity = (30, 240)
+    , gameBall = Ball { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+                      , ballVelocity = (0, 0)
                       , ballRadius = ballRadiusCFG}
     , gameBlocks =  [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
-                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
+                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even (floor x :: Int)] ++ 
                     [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
                     [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
     , gameState = Running
+    , gameLives = 3  -- Starting number of lives
     }
 
 main :: IO ()
 main = play
-    (InWindow "HaskellBlockBreaker" (floor windowWidth, floor windowHeight) (30, 30))
+    (InWindow "HaskellBlockBreaker" (newWidth, newHeight) (30, 30))
     black fps defaultGame drawGame handleEvent updateGame
+    where
+      newWidth = 800
+      newHeight = 600
