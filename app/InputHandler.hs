@@ -11,26 +11,38 @@ module InputHandler where
 import GameTypes
 import Graphics.Gloss.Interface.IO.Game
 
-handleEvent :: Event -> Game -> Game
-handleEvent (EventKey (Char k) Down _ _ ) game
-    | k == 'a' || k == 'd' = startBallMovement $ movePaddle k game
+handleEvent  :: Event -> Game -> Game
+handleEvent event game
+    | gameState game == Waiting = handleEventsWaiting event game
+    | gameState game == Running = handleEventsRunning event game
+    | otherwise = game
+
+handleEventsWaiting :: Event -> Game -> Game
+handleEventsWaiting (EventKey (Char k) Down _ _ ) game
+    | k == 'a' || k == 'd' = startBallMovement game {gameState = Running}
+    | otherwise = game
+        where
+            startBallMovement game =
+                if fst (ballVelocity (gameBall game)) == 0 && snd (ballVelocity (gameBall game)) == 0
+                then game {gameBall = (gameBall game) {ballVelocity = (0, 200)}}
+                else game
+handleEventsWaiting _ game = game
+
+handleEventsRunning :: Event -> Game -> Game
+handleEventsRunning (EventKey (Char k) Down _ _ ) game
+    | k == 'a' || k == 'd' = movePaddle k game
     | otherwise = game
         where
             movePaddle k game = game {gameInputState = ginput {paddleMovement = movement}}
                 where
                     ginput = gameInputState game
                     movement = if k == 'a' then MoveLeft else MoveRight
-
-            startBallMovement game =
-                if fst (ballVelocity (gameBall game)) == 0 && snd (ballVelocity (gameBall game)) == 0
-                then game {gameBall = (gameBall game) {ballVelocity = (0, 200)}}
-                else game
                 
-handleEvent (EventKey (Char k) Up _ _ ) game
+handleEventsRunning (EventKey (Char k) Up _ _ ) game
     | k == 'a' = game {gameInputState = ginput {paddleMovement = HoldStill}}
     | k == 'd' = game {gameInputState = ginput {paddleMovement = HoldStill}}
     | otherwise = game
         where
             ginput = gameInputState game
             pinput = paddleMovement ginput
-handleEvent _ game = game
+handleEventsRunning _ game = game

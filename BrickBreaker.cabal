@@ -67,7 +67,8 @@ executable BrickBreaker
                       Constants,
                       GameLogic,
                       InputHandler,
-                      Util
+                      Util,
+                      Levels
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
