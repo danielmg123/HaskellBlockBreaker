@@ -15,6 +15,7 @@ import GameTypes
 import InputHandler
 import GameLogic
 import Render (drawGame)
+import Levels
 
 
 defaultGame :: Game
@@ -27,12 +28,10 @@ defaultGame = Game
     , gameBall = Ball { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
                       , ballVelocity = (0, 0)
                       , ballRadius = ballRadiusCFG}
-    , gameBlocks =  [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
-                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even (floor x :: Int)] ++ 
-                    [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
-                    [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
-    , gameState = Running
+    , gameBlocks = levelBlocks (head levels)
+    , gameState = Waiting
     , gameLives = 3  -- Starting number of lives
+    , gameLevel = head levels
     }
 
 main :: IO ()

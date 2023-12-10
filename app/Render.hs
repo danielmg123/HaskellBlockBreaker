@@ -37,13 +37,14 @@ drawBlocks :: [Block] -> Picture
 drawBlocks blocks = Pictures $ map drawBlock blocks
 
 drawGame :: Game -> Picture
-drawGame (Game _ paddle ball blocks _ lives) =
+drawGame (Game _ paddle ball blocks _ lives level) =
     Pictures [
         drawPaddle paddle,
         drawBall ball,
         drawBlocks blocks,
         drawBorders,
-        drawLives lives
+        drawLives lives,
+        drawLevel level
     ]
 
 drawLives :: Int -> Picture
@@ -52,6 +53,14 @@ drawLives lives = Pictures [livesText, livesIcons]
     livesText = Translate (40 + (windowWidth / 2 - 100)) (windowHeight / 2 - 30) . Scale 0.12 0.12 . Color white $ Text "Lives Left"
     livesIcons = Pictures $ take (lives - 1) $ zipWith (\n -> Translate (65 + (windowWidth / 2 - 100 + n * 20)) (windowHeight / 2 - 50)) [0..] (repeat (Color blue $ circleSolid 8))
 
+drawLevel :: Level -> Picture
+drawLevel level =
+    Color white $
+    Translate (windowWidth / (-2) - 40) (windowHeight / 2 - 30) $
+    Pictures [
+        Scale 0.12 0.12 $ Text ("Level: " ++ show (levelNumber level)),
+        Translate 0 (-30) $ Scale 0.12 0.12 $ Text $ "\"" ++ levelName level ++ "\""
+    ]
 
 -- Draws the game borders
 drawBorders :: Picture

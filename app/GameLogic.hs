@@ -10,11 +10,24 @@ Implementation:
 module GameLogic where
 import GameTypes
 import Constants
+import Util
+import Graphics.Gloss.Data.Vector
+import Levels
 
--- Updates the game state
 updateGame :: Float -> Game -> Game
 updateGame delta game
-    | ballHitsBottom = handleBallReset
+    | gameState game == Running = updateRunning delta game
+    | gameState game == Waiting = updateWaiting delta game
+    | otherwise = game
+
+updateWaiting :: Float -> Game -> Game
+updateWaiting delta game = game
+
+-- Updates the game state
+updateRunning :: Float -> Game -> Game
+updateRunning delta game
+    | allBlocksBroken = nextLevel 
+    | ballHitsBottom = handleBallReset 
     | otherwise = game
         { gameBall = updatedBall
         , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) (gamePaddle game)
@@ -28,13 +41,27 @@ updateGame delta game
 
     (updatedBlocks, updatedBall) = updateBlocksAndBall delta game
 
+    allBlocksBroken = all isGrey (gameBlocks game)
+    isGrey block = blockColor block == Grey
+
     handleBallReset
         | gameLives game > 1 = game
             { gameBall = resetBall
             , gamePaddle = resetPaddle
             , gameLives = gameLives game - 1
+            , gameState = Waiting
             }
         | otherwise = resetGame
+
+    nextLevel = game
+        { gameBall = resetBall
+        , gamePaddle = resetPaddle
+        , gameState = Waiting
+        , gameLevel = next
+        , gameBlocks = levelBlocks next
+        }
+        where 
+            next = levels !! levelNumber (gameLevel game)
 
     resetBall = Ball 
         { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
@@ -50,15 +77,14 @@ updateGame delta game
 
     resetGame = game
         { gameBall = resetBall
-        , gameBlocks = initialBlocks
+        , gameBlocks = levelBlocks (head levels)
         , gameLives = initialLives
         , gamePaddle = resetPaddle
+        , gameState = Waiting
+        , gameLevel = head levels
         }
 
-    initialBlocks = [Block (x * blockWidthCFG, y * blockHeightCFG) blockWidthCFG blockHeightCFG 1 Green | x <- [-4..4], y <- [-4..4], x * x + y * y < 3*3 && x * x + y * y > 1] ++
-                    [Block (x * blockWidthCFG, 6 * blockHeightCFG) blockWidthCFG blockHeightCFG (-1) Grey | x <- [-4..4], even $ floor x] ++ 
-                    [Block (x * blockWidthCFG, -6 * blockHeightCFG) blockWidthCFG blockHeightCFG 3 Red | x <- [-3..3]] ++ 
-                    [Block (x * blockWidthCFG, -5 * blockHeightCFG) blockWidthCFG blockHeightCFG 2 Yellow | x <- [-3..3]]
+    initialBlocks = level1
 
     initialLives = 3  -- Set the initial number of lives here
 
@@ -74,29 +100,37 @@ updateBlocksAndBall delta game = foldr processBlock ([], updatedBallAfterPaddle)
         else (block : blocks, ball)
             where
                 colType = detectCollision ball block
-                reflectedBall = reflectBall ball colType
+                reflectedBall = reflectBall ball block colType
 
-    hitBlock :: Block -> [Block]
-    hitBlock (Block _ _ _ 1 _) = []
-    hitBlock block@(Block _ _ _ _ Grey) = [block]
-    hitBlock block = [block { blockStrength = blockStrength block - 1
-                           , blockColor = updateBlockColor (blockColor block)}]
+hitBlock :: Block -> [Block]
+hitBlock (Block _ _ _ 1 _) = []
+hitBlock block@(Block _ _ _ _ Grey) = [block]
+hitBlock block = [block { blockStrength = blockStrength block - 1
+                        , blockColor = updateBlockColor (blockColor block)}]
 
-    reflectBall :: Ball -> CollisionType -> Ball
-    reflectBall ball CollideHorizontal = ball { ballVelocity = (-(fst (ballVelocity ball)), snd (ballVelocity ball)) }
-    reflectBall ball CollideVertical = ball { ballVelocity = (fst (ballVelocity ball), -(snd (ballVelocity ball))) }
-    -- Corner collisions...?
-    reflectBall ball _ = ball
+reflectBall :: Ball -> Block -> CollisionType -> Ball
+reflectBall ball@(Ball _ (vx, vy) _) _ CollideHorizontal = ball { ballVelocity = (-vx, vy) }
+reflectBall ball@(Ball _ (vx, vy) _) _ CollideVertical = ball { ballVelocity = (vx, -vy) }
+reflectBall ball@(Ball (bx, by) v@(vx, vy) _) block colType = ball {ballVelocity = newVelocity}
+    where
+        (cx, cy) = cornerPoint block colType
+        angleCorner = vectorAngle (bx - cx, by - cy)
+        angleVelocity = vectorAngle (-vx, -vy)
+        angleReflected = angleVelocity + (2 * (angleCorner - angleVelocity))
+        newVelocity = mulSV (magV v) (cos angleReflected, sin angleReflected)
 
-    updateBlockColor :: BlockColor -> BlockColor
-    updateBlockColor Red = Yellow
-    updateBlockColor Yellow = Green
-    updateBlockColor Green = Green
-    updateBlockColor Grey = Grey  -- Grey blocks don't change color
+-- Gets the corner point based on collision type
+cornerPoint :: Block -> CollisionType -> Point
+cornerPoint (Block (x, y) w h _ _) CollideNW = (x, y + h)
+cornerPoint (Block (x, y) w h _ _) CollideNE = (x + w, y + h)
+cornerPoint (Block (x, y) w h _ _) CollideSE = (x + w, y)
+cornerPoint (Block (x, y) w h _ _) _ = (x, y)
 
-
-data CollisionType = CollideVertical | CollideHorizontal | CollideCorner | CollideNone
-    deriving (Eq)
+updateBlockColor :: BlockColor -> BlockColor
+updateBlockColor Red = Yellow
+updateBlockColor Yellow = Green
+updateBlockColor Green = Green
+updateBlockColor Grey = Grey  -- Grey blocks don't change color
 
 -- Check collision between ball and block
 detectCollision :: Ball -> Block -> CollisionType
@@ -107,6 +141,10 @@ detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
       (by + radius > y || by - radius < y2) = CollideVertical
     | (by > y && by < y2) &&
       (bx + radius > x || bx - radius < x2) = CollideHorizontal
+    | distance (bx, by) (x , y ) < radius   = CollideSW
+    | distance (bx, by) (x2, y ) < radius   = CollideSE
+    | distance (bx, by) (x , y2) < radius   = CollideNW
+    | distance (bx, by) (x2, y2) < radius   = CollideNE
     | otherwise                             = CollideNone
         where
             x2 = x + width
@@ -123,7 +161,7 @@ bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) radius)
 bounceOffPaddle :: Float -> Ball -> Paddle -> Ball
 bounceOffPaddle delta ball paddle
     | bx > px && bx < px + pw && by > py && by < py + ph =
-        ball { ballVelocity = (newVx, -(snd bv)) }
+        ball { ballVelocity = newV }
     | otherwise = ball
         where
             bx = fst $ ballPosition ball
@@ -139,6 +177,8 @@ bounceOffPaddle delta ball paddle
             distanceFromMid = bx - paddleMid
             maxBounceAngle = pi / 4  -- Increase num to increase angle
             ratio = distanceFromMid / (pw / 2)
+            newAngle = (pi / 2) - ratio * ((pi / 2) - maxBounceAngle)
+            newV = mulSV (magV bv) (unitVectorAtAngle newAngle)
             newVx = ratio * (ballSpeed * cos maxBounceAngle)
             ballSpeed = sqrt $ fst bv ** 2 + snd bv ** 2
 
@@ -147,6 +187,7 @@ bounceOffPaddle delta ball paddle
 updateBall :: Float -> Ball -> Ball
 updateBall delta ball =
     updateBallPosition delta $
+    updateBallVelocity delta $
     bounceOffBoundaries 240 ball
 
 -- Adds the velocity to the position of the ball
@@ -156,6 +197,10 @@ updateBallPosition delta ball = ball
     where
         pos = ballPosition ball
         vel = ballVelocity ball
+
+-- Increases velocity by ballSpeedUp * delta
+updateBallVelocity :: Float -> Ball -> Ball
+updateBallVelocity delta ball@(Ball _ v _) = ball {ballVelocity = mulSV (magV v + (ballSpeedUp * delta)) (normalizeV v)}
 
 updatePaddle :: Float -> PaddleInputState -> Paddle -> Paddle
 updatePaddle delta movement paddle = 

@@ -22,10 +22,12 @@ data Game = Game
   , gameBlocks :: [Block]  -- The blocks remaining to be broken
   , gameState :: GameState -- The current state of the game
   , gameLives :: Int    -- The number of lives remaining
+  , gameLevel :: Level
   }
 
 -- The GameState type represents the different possible states of the game.
-data GameState = Menu | Running | Paused | GameOver
+data GameState = Menu | Waiting | Running | Paused | LostLife | GameOver
+  deriving (Eq, Show)
 
 -- The Paddle type represents the player's paddle.
 data Paddle = Paddle
@@ -58,3 +60,13 @@ data Block = Block
   , blockStrength :: Int    -- The strength of the block (hits required to break it)
   , blockColor :: BlockColor -- The color of the block
   }
+
+-- The CollisionType represents how a collision between the ball and a block occured
+data CollisionType = CollideVertical | CollideHorizontal | CollideNE | CollideNW | CollideSE | CollideSW | CollideNone
+    deriving (Eq)
+
+data Level = Level {
+      levelNumber :: Int
+    , levelName :: String
+    , levelBlocks :: [Block]
+}
