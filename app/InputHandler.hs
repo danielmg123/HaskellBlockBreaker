@@ -19,21 +19,21 @@ handleEvent event game
 
 handleEventsWaiting :: Event -> Game -> Game
 handleEventsWaiting (EventKey (Char k) Down _ _ ) game
-    | k == 'a' || k == 'd' = startBallMovement game {gameState = Running}
+    | k == 'a' || k == 'd' = startBallMovement
     | otherwise = game
         where
-            startBallMovement game =
+            startBallMovement =
                 if fst (ballVelocity (gameBall game)) == 0 && snd (ballVelocity (gameBall game)) == 0
-                then game {gameBall = (gameBall game) {ballVelocity = (0, 200)}}
+                then game {gameBall = (gameBall game) {ballVelocity = (0, 200)}, gameState = Running}
                 else game
 handleEventsWaiting _ game = game
 
 handleEventsRunning :: Event -> Game -> Game
 handleEventsRunning (EventKey (Char k) Down _ _ ) game
-    | k == 'a' || k == 'd' = movePaddle k game
+    | k == 'a' || k == 'd' = movePaddle
     | otherwise = game
         where
-            movePaddle k game = game {gameInputState = ginput {paddleMovement = movement}}
+            movePaddle = game {gameInputState = ginput {paddleMovement = movement}}
                 where
                     ginput = gameInputState game
                     movement = if k == 'a' then MoveLeft else MoveRight
@@ -44,5 +44,4 @@ handleEventsRunning (EventKey (Char k) Up _ _ ) game
     | otherwise = game
         where
             ginput = gameInputState game
-            pinput = paddleMovement ginput
 handleEventsRunning _ game = game

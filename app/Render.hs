@@ -24,8 +24,8 @@ drawBall :: Ball -> Picture
 drawBall (Ball (x, y) _ r) = Translate x y $ Color blue $ circleSolid r
 
 drawBlock :: Block -> Picture
-drawBlock (Block (x, y) width height _ color) =
-    Color (colorToRGB color) $ box x y width height
+drawBlock (Block (x, y) width height _ col) =
+    Color (colorToRGB col) $ box x y width height
 
 colorToRGB :: BlockColor -> Color
 colorToRGB Red = red
