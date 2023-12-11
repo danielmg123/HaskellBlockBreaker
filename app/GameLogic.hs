@@ -18,16 +18,35 @@ updateGame :: Float -> Game -> Game
 updateGame delta game
     | gameState game == Running = updateRunning delta game
     | gameState game == Waiting = updateWaiting delta game
+    | gameState game == NextLevel = updateNextLevel delta game
+    | gameState game == LostLife = updateLostLife delta game
+    | gameState game == GameOver = updateGameOver delta game
     | otherwise = game
 
 updateWaiting :: Float -> Game -> Game
 updateWaiting delta game = game
 
+updateNextLevel :: Float -> Game -> Game
+updateNextLevel delta game
+    | gameTimer game > 0 = game {gameTimer = gameTimer game - delta}
+    | otherwise = nextLevel game
+
+updateLostLife :: Float -> Game -> Game
+updateLostLife delta game 
+    | gameLives game <= 1 = game {gameState = GameOver, gameTimer = 4.0}
+    | gameTimer game > 0 = game {gameTimer = gameTimer game - delta}
+    | otherwise = handleBallReset game
+
+updateGameOver :: Float -> Game -> Game
+updateGameOver delta game
+    | gameTimer game > 0 = game {gameTimer = gameTimer game - delta}
+    | otherwise = resetGame game
+
 -- Updates the game state
 updateRunning :: Float -> Game -> Game
 updateRunning delta game
-    | allBlocksBroken = nextLevel 
-    | ballHitsBottom = handleBallReset 
+    | allBlocksBroken = game {gameState = NextLevel, gameTimer = 1.5}
+    | ballHitsBottom = game {gameState = LostLife, gameTimer = 1.5}
     | otherwise = game
         { gameBall = updatedBall
         , gamePaddle = updatePaddle delta (paddleMovement (gameInputState game)) (gamePaddle game)
@@ -44,49 +63,50 @@ updateRunning delta game
     allBlocksBroken = all isGrey (gameBlocks game)
     isGrey block = blockColor block == Grey
 
-    handleBallReset
-        | gameLives game > 1 = game
-            { gameBall = resetBall
-            , gamePaddle = resetPaddle
-            , gameLives = gameLives game - 1
-            , gameState = Waiting
-            }
-        | otherwise = resetGame
-
-    nextLevel = game
+handleBallReset :: Game -> Game
+handleBallReset game
+    | gameLives game > 1 = game
         { gameBall = resetBall
         , gamePaddle = resetPaddle
+        , gameLives = gameLives game - 1
         , gameState = Waiting
-        , gameLevel = next
-        , gameBlocks = levelBlocks next
         }
-        where 
-            next = levels !! levelNumber (gameLevel game)
+    -- | otherwise = resetGame game
+    | otherwise = game
 
-    resetBall = Ball 
-        { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
-        , ballVelocity = (0, 0)
-        , ballRadius = ballRadiusCFG
-        }
+nextLevel game = game
+    { gameBall = resetBall
+    , gamePaddle = resetPaddle
+    , gameState = Waiting
+    , gameLevel = next
+    , gameBlocks = levelBlocks next
+    }
+    where
+        next = levels !! levelNumber (gameLevel game)
 
-    resetPaddle = Paddle 
-        { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
-        , paddleWidth = paddleWidthCFG
-        , paddleHeight = paddleHeightCFG 
-        }
+resetBall = Ball
+    { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
+    , ballVelocity = (0, 0)
+    , ballRadius = ballRadiusCFG
+    }
 
-    resetGame = game
-        { gameBall = resetBall
-        , gameBlocks = levelBlocks (head levels)
-        , gameLives = initialLives
-        , gamePaddle = resetPaddle
-        , gameState = Waiting
-        , gameLevel = head levels
-        }
+resetPaddle = Paddle
+    { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
+    , paddleWidth = paddleWidthCFG
+    , paddleHeight = paddleHeightCFG
+    }
 
-    initialBlocks = level1
-
-    initialLives = 3  -- Set the initial number of lives here
+resetGame game = game
+    { gameBall = resetBall
+    , gameBlocks = levelBlocks (head levels)
+    , gameLives = initialLives
+    , gamePaddle = resetPaddle
+    , gameState = Waiting
+    , gameLevel = head levels
+    }
+    where
+        initialBlocks = level1
+        initialLives = 3  -- Set the initial number of lives here
 
 
 -- Function to update blocks and ball
@@ -203,7 +223,7 @@ updateBallVelocity :: Float -> Ball -> Ball
 updateBallVelocity delta ball@(Ball _ v _) = ball {ballVelocity = mulSV (magV v + (ballSpeedUp * delta)) (normalizeV v)}
 
 updatePaddle :: Float -> PaddleInputState -> Paddle -> Paddle
-updatePaddle delta movement paddle = 
+updatePaddle delta movement paddle =
     let
         halfPaddleWidth = paddleWidth paddle / 2
         leftLimit = -halfWidth - 25

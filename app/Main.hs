@@ -32,6 +32,7 @@ defaultGame = Game
     , gameState = Waiting
     , gameLives = 3  -- Starting number of lives
     , gameLevel = head levels
+    , gameTimer = 90.0
     }
 
 main :: IO ()

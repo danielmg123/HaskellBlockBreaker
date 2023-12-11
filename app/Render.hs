@@ -37,15 +37,44 @@ drawBlocks :: [Block] -> Picture
 drawBlocks blocks = Pictures $ map drawBlock blocks
 
 drawGame :: Game -> Picture
-drawGame (Game _ paddle ball blocks _ lives level) =
+drawGame game
+    | gameState game == Running = drawGameRunning game
+    | gameState game == LostLife = drawGameLostLife game
+    | gameState game == NextLevel = drawGameNextLevel game
+    | gameState game == GameOver = drawGameGameOver game
+    | otherwise = drawGameRunning game
+
+drawGameRunning :: Game -> Picture
+drawGameRunning game =
     Pictures [
-        drawPaddle paddle,
-        drawBall ball,
-        drawBlocks blocks,
+        drawPaddle $ gamePaddle game,
+        drawBall $ gameBall game,
+        drawBlocks $ gameBlocks game,
         drawBorders,
-        drawLives lives,
-        drawLevel level
+        drawLives $ gameLives game,
+        drawLevel $ gameLevel game
     ]
+
+drawGameLostLife :: Game -> Picture
+drawGameLostLife game = drawGameRunning game <> lostText 
+    where
+        lostText = Translate x y $ Scale 0.5 0.5 $ Color white $ Text "not good"
+        x = -140
+        y = 240 - (gameTimer game * 100)
+
+drawGameNextLevel :: Game -> Picture
+drawGameNextLevel game = drawGameRunning game <> nextText
+    where
+        nextText = Translate x y $ Scale 0.5 0.5 $ Color white $ Text "aww yeah"
+        x = -140
+        y = 240 - (gameTimer game * 100)
+
+drawGameGameOver :: Game -> Picture
+drawGameGameOver game = drawGameRunning game <> gameOverText
+    where
+        gameOverText = Translate x y $ Scale 0.5 0.5 $ Color white $ Text "Game Over"
+        x = -170
+        y = 240 - (gameTimer game * 100)
 
 drawLives :: Int -> Picture
 drawLives lives = Pictures [livesText, livesIcons]
