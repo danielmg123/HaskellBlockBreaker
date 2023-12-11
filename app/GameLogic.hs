@@ -237,4 +237,4 @@ updatePaddle _ movement paddle =
     where
         x = fst $ paddlePosition paddle
         y = snd $ paddlePosition paddle
-        halfWidth = (windowWidth / 2)  -- As defined in drawBorders
+        halfWidth = windowWidth / 2  -- As defined in drawBorders
