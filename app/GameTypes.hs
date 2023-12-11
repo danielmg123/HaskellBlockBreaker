@@ -23,10 +23,11 @@ data Game = Game
   , gameState :: GameState -- The current state of the game
   , gameLives :: Int    -- The number of lives remaining
   , gameLevel :: Level
+  , gameTimer :: Float
   }
 
 -- The GameState type represents the different possible states of the game.
-data GameState = Menu | Waiting | Running | Paused | LostLife | GameOver
+data GameState = Menu | Waiting | Running | NextLevel | Paused | LostLife | GameOver
   deriving (Eq, Show)
 
 -- The Paddle type represents the player's paddle.
