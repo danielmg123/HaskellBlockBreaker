@@ -24,7 +24,7 @@ updateGame delta game
     | otherwise = game
 
 updateWaiting :: Float -> Game -> Game
-updateWaiting delta game = game
+updateWaiting _ game = game
 
 updateNextLevel :: Float -> Game -> Game
 updateNextLevel delta game
@@ -55,8 +55,8 @@ updateRunning delta game
   where
     ball = gameBall game
     ballY = snd $ ballPosition ball
-    ballRadius = ballRadiusCFG
-    ballHitsBottom = ballY - ballRadius <= -windowHeight / 2
+    ballRad = ballRadiusCFG
+    ballHitsBottom = ballY - ballRad <= -windowHeight / 2
 
     (updatedBlocks, updatedBall) = updateBlocksAndBall delta game
 
@@ -74,6 +74,7 @@ handleBallReset game
     -- | otherwise = resetGame game
     | otherwise = game
 
+nextLevel :: Game -> Game
 nextLevel game = game
     { gameBall = resetBall
     , gamePaddle = resetPaddle
@@ -84,18 +85,21 @@ nextLevel game = game
     where
         next = levels !! levelNumber (gameLevel game)
 
+resetBall :: Ball
 resetBall = Ball
     { ballPosition = (0, 15 + (-windowHeight / 2 + paddleHeightCFG + ballRadiusCFG))
     , ballVelocity = (0, 0)
     , ballRadius = ballRadiusCFG
     }
 
+resetPaddle :: Paddle
 resetPaddle = Paddle
     { paddlePosition = (-40, -windowHeight / 2 + paddleHeightCFG)
     , paddleWidth = paddleWidthCFG
     , paddleHeight = paddleHeightCFG
     }
 
+resetGame :: Game -> Game
 resetGame game = game
     { gameBall = resetBall
     , gameBlocks = levelBlocks (head levels)
@@ -105,7 +109,6 @@ resetGame game = game
     , gameLevel = head levels
     }
     where
-        initialBlocks = level1
         initialLives = 3  -- Set the initial number of lives here
 
 
@@ -141,10 +144,10 @@ reflectBall ball@(Ball (bx, by) v@(vx, vy) _) block colType = ball {ballVelocity
 
 -- Gets the corner point based on collision type
 cornerPoint :: Block -> CollisionType -> Point
-cornerPoint (Block (x, y) w h _ _) CollideNW = (x, y + h)
+cornerPoint (Block (x, y) _ h _ _) CollideNW = (x, y + h)
 cornerPoint (Block (x, y) w h _ _) CollideNE = (x + w, y + h)
-cornerPoint (Block (x, y) w h _ _) CollideSE = (x + w, y)
-cornerPoint (Block (x, y) w h _ _) _ = (x, y)
+cornerPoint (Block (x, y) w _ _ _) CollideSE = (x + w, y)
+cornerPoint (Block (x, y) _ _ _ _) _ = (x, y)
 
 updateBlockColor :: BlockColor -> BlockColor
 updateBlockColor Red = Yellow
@@ -173,13 +176,13 @@ detectCollision (Ball (bx, by) _ radius) (Block (x, y) width height _ _)
 -- Negates velocity if ball is hitting a boundary
 -- It needs to be changed. It only bounces in a square around the center
 bounceOffBoundaries :: Float -> Ball -> Ball
-bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) radius)
+bounceOffBoundaries border ball@(Ball (x, y) (vx, vy) _)
     | x >= border || x <= -border = ball {ballVelocity = (-vx, vy)}
     | y >= border || y <= -border = ball {ballVelocity = (vx, -vy)}
     | otherwise = ball
 
 bounceOffPaddle :: Float -> Ball -> Paddle -> Ball
-bounceOffPaddle delta ball paddle
+bounceOffPaddle _ ball paddle
     | bx > px && bx < px + pw && by > py && by < py + ph =
         ball { ballVelocity = newV }
     | otherwise = ball
@@ -199,8 +202,6 @@ bounceOffPaddle delta ball paddle
             ratio = distanceFromMid / (pw / 2)
             newAngle = (pi / 2) - ratio * ((pi / 2) - maxBounceAngle)
             newV = mulSV (magV bv) (unitVectorAtAngle newAngle)
-            newVx = ratio * (ballSpeed * cos maxBounceAngle)
-            ballSpeed = sqrt $ fst bv ** 2 + snd bv ** 2
 
 
 -- Updates the ball
@@ -223,9 +224,8 @@ updateBallVelocity :: Float -> Ball -> Ball
 updateBallVelocity delta ball@(Ball _ v _) = ball {ballVelocity = mulSV (magV v + (ballSpeedUp * delta)) (normalizeV v)}
 
 updatePaddle :: Float -> PaddleInputState -> Paddle -> Paddle
-updatePaddle delta movement paddle =
+updatePaddle _ movement paddle =
     let
-        halfPaddleWidth = paddleWidth paddle / 2
         leftLimit = -halfWidth - 25
         rightLimit = halfWidth - 55
         newX = case movement of
